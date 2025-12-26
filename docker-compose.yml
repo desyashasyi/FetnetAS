@@ -51,6 +51,9 @@ services:
             - pg_data:/var/lib/postgresql/data
         networks:
             - WebFPTE
+        ports:
+            - "5433:5432"
+
 
     redis:
         image: redis:alpine
