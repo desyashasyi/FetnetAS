@@ -29,7 +29,7 @@ services:
         container_name: Fetnet-nginx
         restart: always
         ports:
-            - "80:80"
+            - "8080:80"
             # Port 5173 DIHAPUS dari sini karena Nginx bukan tempat Vite berjalan
         volumes:
             - .:/var/www
