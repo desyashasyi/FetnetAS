@@ -1,0 +1,70 @@
+services:
+    app:
+        build:
+            context: .
+            dockerfile: .docker/php/Dockerfile
+            target: prod
+            args:
+                WWWUSER: ${WWWUSER}
+                WWWGROUP: ${WWWGROUP}
+        restart: always
+        container_name: Fetnet-app
+        working_dir: /var/www
+        # Buka port 8000 (jika pakai artisan serve) dan 5173 (Vite) di sini
+        ports:
+            - "8000:8000"
+            - "5173:5173"
+        volumes:
+            - .:/var/www:cached
+            - .docker/php/supervisord.conf:/etc/supervisord.conf
+            - .docker/php/supervisor.conf:/etc/supervisor/conf.d/supervisor.conf
+        depends_on:
+            - postgres
+            - redis
+        networks:
+            - WebFPTE
+
+    nginx:
+        image: nginx:alpine
+        container_name: Fetnet-nginx
+        restart: always
+        ports:
+            - "80:80"
+            # Port 5173 DIHAPUS dari sini karena Nginx bukan tempat Vite berjalan
+        volumes:
+            - .:/var/www
+            - .docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+        depends_on:
+            - app
+        networks:
+            - WebFPTE
+
+    postgres:
+        image: postgres:16-alpine
+        container_name: Fetnet-postgres
+        restart: always
+        environment:
+            POSTGRES_DB: ${DB_DATABASE}
+            POSTGRES_USER: ${DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - pg_data:/var/lib/postgresql/data
+        networks:
+            - WebFPTE
+
+    redis:
+        image: redis:alpine
+        container_name: Fetnet-redis
+        restart: always
+        volumes:
+            - redis_data:/data
+        networks:
+            - WebFPTE
+
+volumes:
+    pg_data:
+    redis_data:
+
+networks:
+    WebFPTE:
+        driver: bridge
