@@ -54,7 +54,7 @@ services:
         networks:
             - WebFPTE
         ports:
-            - "3306:3306" # Port default internal
+            - "3307:3306" # Port default internal
     # -----------------------------------------------
 
     redis:
