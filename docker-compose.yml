@@ -10,7 +10,6 @@ services:
         restart: always
         container_name: Fetnet-app
         working_dir: /var/www
-        # Buka port 8000 (jika pakai artisan serve) dan 5173 (Vite) di sini
         ports:
             - "8000:8000"
             - "5173:5173"
@@ -19,7 +18,7 @@ services:
             - .docker/php/supervisord.conf:/etc/supervisord.conf
             - .docker/php/supervisor.conf:/etc/supervisor/conf.d/supervisor.conf
         depends_on:
-            - postgres
+            - mysql  # <--- UBAH INI
             - redis
         networks:
             - WebFPTE
@@ -29,8 +28,7 @@ services:
         container_name: Fetnet-nginx
         restart: always
         ports:
-            - "8010:80"
-            # Port 5173 DIHAPUS dari sini karena Nginx bukan tempat Vite berjalan
+            - "80:80"
         volumes:
             - .:/var/www
             - .docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
@@ -39,21 +37,25 @@ services:
         networks:
             - WebFPTE
 
-    postgres:
-        image: postgres:16-alpine
-        container_name: Fetnet-postgres
+    # --- BAGIAN INI DIUBAH DARI POSTGRES KE MYSQL ---
+    mysql:
+        image: mysql:8.0
+        container_name: Fetnet-mysql
         restart: always
         environment:
-            POSTGRES_DB: ${DB_DATABASE}
-            POSTGRES_USER: ${DB_USERNAME}
-            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+            MYSQL_ROOT_HOST: "%"
+            MYSQL_DATABASE: ${DB_DATABASE}
+            # Jika user di .env bukan root, baris di bawah ini akan membuat user baru
+            # MYSQL_USER: ${DB_USERNAME}
+            # MYSQL_PASSWORD: ${DB_PASSWORD}
         volumes:
-            - pg_data:/var/lib/postgresql/data
+            - mysql_data:/var/lib/mysql
         networks:
             - WebFPTE
         ports:
-            - "5433:5432"
-
+            - "3306:3306" # Port default internal
+    # -----------------------------------------------
 
     redis:
         image: redis:alpine
@@ -65,7 +67,7 @@ services:
             - WebFPTE
 
 volumes:
-    pg_data:
+    mysql_data: # <--- UBAH DARI pg_data KE mysql_data
     redis_data:
 
 networks:

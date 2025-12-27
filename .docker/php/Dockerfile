@@ -9,8 +9,7 @@ ARG WWWGROUP=1000
 WORKDIR /var/www
 
 # 1. Update & Install System Dependencies
-# Di sini kita menggunakan apt-get (Debian) bukan apk (Alpine)
-# Paket 'fet' tersedia langsung di sini.
+# HAPUS: libpq-dev (library postgres)
 RUN apt-get update && apt-get install -y \
     gnupg \
     gosu \
@@ -30,20 +29,20 @@ RUN apt-get update && apt-get install -y \
     nano \
     fet \
     libzip-dev \
-    libpq-dev \
     libjpeg-dev \
     libfreetype6-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Install PHP Extensions
+# HAPUS: pdo_pgsql (driver postgres)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql pdo_pgsql opcache bcmath sockets pcntl zip
+    && docker-php-ext-install gd pdo pdo_mysql opcache bcmath sockets pcntl zip
 
 # 3. Install Redis via Pecl
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
-# 4. Install Node.js (Versi Debian butuh setup source dulu)
+# 4. Install Node.js
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y nodejs \
     && npm install -g npm
@@ -64,7 +63,7 @@ RUN mkdir -p /var/log/supervisor \
 COPY .docker/php/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# 7. Setup User (Handling User ID agar tidak permission denied di Linux/Mac)
+# 7. Setup User
 RUN groupmod -g ${WWWGROUP} www-data && \
     usermod -u ${WWWUSER} -g ${WWWGROUP} www-data
 
@@ -77,7 +76,6 @@ FROM base AS dev
 RUN pecl install xdebug \
     && docker-php-ext-enable xdebug
 
-# Config XDebug
 RUN echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
     && echo "xdebug.start_with_request=trigger" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
